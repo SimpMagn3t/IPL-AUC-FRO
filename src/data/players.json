@@ -1,0 +1,19 @@
+[
+    {
+      "id": 1,
+      "name": "Virat Kohli",
+      "role": "Batsman",
+      "base_price": 2000000,
+      "retained_by": "RCB",
+      "rtm_eligible": true
+    },
+    {
+      "id": 2,
+      "name": "MS Dhoni",
+      "role": "Wicketkeeper",
+      "base_price": 1500000,
+      "retained_by": "CSK",
+      "rtm_eligible": false
+    }
+  ]
+  
