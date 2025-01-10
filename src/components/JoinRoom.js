@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // for redirecting after joining
+import { Link, useNavigate } from 'react-router-dom'; // for redirecting after joining
 import axios from 'axios';
 
 const JoinRoom = () => {
@@ -81,7 +81,28 @@ const JoinRoom = () => {
                     <p>{message}</p>
                 </div>
             )}
+             <p style={{ color: 'red', fontSize: '18px' }}>
+        Error joining room?{' '}
+        <Link
+          to="/joinissue" // Redirects to the Join Issue page
+          style={{
+            color: '#ff9800',
+            fontWeight: 'bold',
+            textDecoration: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          Click here
+        </Link>
+      </p>
+      <footer style={{ textAlign: 'center', padding: '20px', backgroundColor: '#f1f1f1', marginTop: '20px' }}>
+  <p style={{ fontSize: '16px', color: '#333' }}>
+    With ❤️ from an RCB fan
+  </p>
+</footer>
+
         </div>
+
     );
 };
 
@@ -93,6 +114,7 @@ const styles = {
         height: '100vh',
         backgroundColor: '#f4f4f4',
         fontFamily: 'Arial, sans-serif',
+        flexDirection: 'column',
     },
     joinSection: {
         textAlign: 'center',

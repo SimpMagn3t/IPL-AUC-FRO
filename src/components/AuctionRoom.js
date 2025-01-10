@@ -8,7 +8,6 @@ const AuctionRoom = () => {
     const { state } = useLocation();
     const { teamInfo } = state || {};
     const teamName=teamInfo.teamName;
-    console.log( "team name is ",teamName, teamInfo.teamName);
     const [teamState, setTeamState] = useState(null);
     const [errorPrompt, setErrorPrompt] = useState(''); // State for error messages
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -42,6 +41,8 @@ const AuctionRoom = () => {
     };
     const [auctionState, setAuctionState] = useState(defa);
     const [errorMessage, setErrorMessage] = useState(null); // To handle errors
+    const [messages, setMessages] = useState([]);
+    const [inputMessage, setInputMessage] = useState('');
     const socketRef = useRef(null); // Ref to ensure a single socket instance
 
     useEffect(() => {
@@ -88,6 +89,7 @@ const AuctionRoom = () => {
             // Listen for new auction item updates
             socketRef.current.on('newItemForAuction', (playerDetails) => {
                 console.log('New item received for auction:', playerDetails);
+                console.log(`hello`,teamState?.purse,teamState);
                 setAuctionState({
                     currentAuctionItem: playerDetails,
                     currentBid: playerDetails.basePrice,
@@ -95,7 +97,13 @@ const AuctionRoom = () => {
                     currBidder: null,
                 });
             });
-
+            //recieve message
+            socketRef.current.on('receiveMessage', (message) => {
+                console.log('Message received:', message);
+                if(message.teamName!=teamName){
+                setMessages((prevMessages) => [...prevMessages, message]);
+                }
+            });
             // Listen for updated bid information
             socketRef.current.on('auctionUpdate', (data) => {
                 console.log('Auction updated:', data);
@@ -150,12 +158,18 @@ const AuctionRoom = () => {
             });
             socketRef.current.on('newUser', ({teamOnStatus,message}) => {
                 setWarning(message);
-                
+                setTimeout(() => {
+                    setWarning('');
+                }, 5000);
                 // Update the team status
                 setTeams(teamOnStatus);
               });
             socketRef.current.on('rtmUpdate', async ({ soldState }) => {
                 if (soldState.rtmTeam === teamCode) {
+                    setWarning(`RTM opportunity for team: ${soldState.rtmTeamName} do you want to use  RTM for ${soldState.currentAuctionItem.name} `); // Set the warning message
+                    setTimeout(() => {
+                    setWarning('');
+                    }, 5000);
                     console.log(`RTM opportunity for team: ${soldState.rtmTeamName}`);
                     setIsRTMAvailable(true); // Show RTM buttons
             
@@ -208,6 +222,10 @@ const AuctionRoom = () => {
                         }
                     }, 1000); // 2-second delay before attaching event listeners
                 } else {
+                    setWarning(`RTM in progress. ${soldState.rtmTeamName} is choosing to use RTM or not.`);
+                    setTimeout(() => {
+                    setWarning('');
+                    }, 5000);
                     console.log(`RTM in progress. ${soldState.rtmTeamName} is choosing to use RTM or not.`);
                 }
             });
@@ -218,6 +236,7 @@ const AuctionRoom = () => {
             
                 if (soldState.soldState.currBidder === teamCode) {
                     console.log("batao bid");
+                    console.log(teamState);
                     setWarning(`${soldState.soldState.rtmTeamName} Matches your bid. Please input your final bid.`); // Set the warning message
                     setShowFinalBidInput(true); // Show the final bid input field
             
@@ -276,6 +295,10 @@ const AuctionRoom = () => {
                         }
                     }, 1000); // 1-second delay before attaching event listeners
                 } else {
+                    setWarning(`RTM in progress. ${soldState.soldState.currBidderName} is bidding it's final bid.`);
+                    setTimeout(() => {
+                    setWarning('');
+                    }, 5000);
                     console.log(`RTM in progress. ${soldState.soldState.currBidderName} is bidding.`);
                 }
             });
@@ -325,6 +348,10 @@ const AuctionRoom = () => {
                     }, 1000); // 2-second delay before attaching event listeners
             
                 } else {
+                    setWarning(`RTM opportunity for team: ${soldState.soldState.rtmTeamName} ${soldState.soldState.currBidderName} made a final bid of ₹${finalBid} lakhs.`);
+                    setTimeout(() => {
+                    setWarning('');
+                    }, 5000);
                     console.log(`RTM in progress. ${soldState.soldState.rtmTeamName} is choosing to use RTM or not.`);
                 }
             });
@@ -384,6 +411,26 @@ const AuctionRoom = () => {
           showErrorPrompt('You do not have enough purse balance to place this bid.');
         }
     };
+    const handleSendMessage = () => {
+        if (inputMessage.trim()) {
+            const messageData = {
+                roomCode,
+                teamName,
+                message: inputMessage,
+            };
+            // Emit the message
+            socketRef.current.emit('sendMessage', messageData);
+            console.log('Message sent:', messageData);
+            // Add the message locally
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { ...messageData, timestamp: new Date().toISOString() },
+            ]);
+
+            // Clear the input
+            setInputMessage('');
+        }
+    };
     const toggleSidebar = () => {
         setIsSidebarOpen((prev) => !prev);
     };
@@ -419,47 +466,14 @@ const AuctionRoom = () => {
             </div>
     
             {/* Main Content */}
-            <div style={{ flex: 1, padding: '20px' }}>
-                {/* Toggle Sidebar */}
-                <button
-                    onClick={toggleSidebar}
-                    style={{
-                        marginBottom: '20px',
-                        backgroundColor: '#007BFF',
-                        color: 'white',
-                        padding: '10px 15px',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                    }}
-                >
-                    {isSidebarOpen ? 'Close Squad' : 'Open Squad'}
-                </button>
-    
-                {/* Auction Details */}
-                <h2>Auction Room</h2>
-                <p><strong>Room Code:</strong> {roomCode}</p>
-                <p><strong>Team:</strong> {teamState?.teamName}</p>
-                <p><strong>Remaining Purse:</strong> ₹{teamState?.purse} lakhs</p>
-                <p><strong>RTMs Available:</strong> {teamState?.rtmsRemaining}</p>
-    
-                {currentAuctionItem ? (
-                    <div style={{ marginTop: '20px', border: '1px solid #ddd', padding: '15px', borderRadius: '5px' }}>
-                        <h3>Current Auction Item</h3>
-                        <p><strong>{currentAuctionItem.name}</strong></p>
-                        <p>Specialism: {currentAuctionItem.specialism}</p>
-                        <p>Base Price: ₹{currentAuctionItem.basePrice} lakhs</p>
-                        {validBid && (
-                            <div>
-                                <p>Current Bid: ₹{currentBid} lakhs</p>
-                                <p>Highest Bidder: {currBidderName}</p>
-                            </div>
-                        )}
+            <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',width: '900px' }}>
+                    <div className='main' style={{ flex: 1, marginRight: '20px' }}>
                         <button
-                            onClick={placeBid}
+                            onClick={toggleSidebar}
                             style={{
-                                marginTop: '10px',
-                                backgroundColor: '#28a745',
+                                marginBottom: '20px',
+                                backgroundColor: '#007BFF',
                                 color: 'white',
                                 padding: '10px 15px',
                                 border: 'none',
@@ -467,109 +481,23 @@ const AuctionRoom = () => {
                                 cursor: 'pointer',
                             }}
                         >
-                            Place Bid
+                            {isSidebarOpen ? 'Close Squad' : 'Open Squad'}
                         </button>
-                    </div>
-                ) : (
-                    <p style={{ marginTop: '20px' }}>No item currently up for auction.</p>
-                )}
-            </div>
-    
-            {/* RTM Section */}
-            {isRTMAvailable && (
-                <div
-                    style={{
-                        marginTop: '20px',
-                        padding: '15px',
-                        border: '1px solid red',
-                        borderRadius: '5px',
-                        backgroundColor: '#f8d7da',
-                    }}
-                >
-                    <p style={{ color: 'red', fontWeight: 'bold' }}>
-                        RTM Opportunity Available. Please respond within 15 seconds.
-                    </p>
-                    <button id="rtmButton" style={{ marginRight: '10px' }}>
-                        Use RTM
-                    </button>
-                    <button id="skipButton">Skip</button>
-                </div>
-            )}
-    
-            {/* Final Bid Input */}
-            {showFinalBidInput && (
-                <div
-                    style={{
-                        marginTop: '20px',
-                        padding: '15px',
-                        border: '1px solid #ddd',
-                        borderRadius: '5px',
-                        backgroundColor: '#f1f1f1',
-                    }}
-                >
-                    <label htmlFor="finalBidInput" style={{ marginRight: '10px' }}>
-                        Enter your final bid:
-                    </label>
-                    <input
-                        type="number"
-                        id="finalBidInput"
-                        min="0"
-                        placeholder={`Greater than current bid`}
-                        style={{
-                            padding: '5px',
-                            borderRadius: '4px',
-                            border: '1px solid #ccc',
-                            marginRight: '10px',
-                        }}
-                    />
-                    <button
-                        id="submitFinalBid"
-                        style={{
-                            backgroundColor: '#007BFF',
-                            color: 'white',
-                            padding: '5px 10px',
-                            border: 'none',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                        }}
-                    >
-                        Submit Final Bid
-                    </button>
-                </div>
-            )}
-    
-            {/* Online/Offline Status */}
-            <div
-                style={{
-                    position: 'absolute',
-                    right: '20px',
-                    top: '20px',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                    backgroundColor: '#f1f1f1',
-                }}
-            >
-                <h4>Team Status</h4>
-                <ul style={{ listStyle: 'none', padding: '0', margin: '0' }}>
-                    {teams.map((team, index) => (
-                        <li key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
-                            <span
-                                style={{
-                                    width: '10px',
-                                    height: '10px',
-                                    borderRadius: '50%',
-                                    backgroundColor: team.status ? 'green' : 'red',
-                                    display: 'inline-block',
-                                    marginRight: '10px',
-                                }}
-                            ></span>
-                            {team.name}
-                        </li>
-                    ))}
-                </ul>
-            </div>
-            {warning && (
+                        <div className='details'> 
+                        <p>
+                            <strong>Room Code:</strong> {roomCode}
+                        </p>
+                        <p>
+                            <strong>Team:</strong> {teamState?.teamName}
+                        </p>
+                        <p>
+                            <strong>Remaining Purse:</strong> ₹{teamState?.purse} lakhs
+                        </p>
+                        <p>
+                            <strong>RTMs Available:</strong> {teamState?.rtmsRemaining}
+                        </p>
+                        </div>
+                        {warning && (
                 <div
                     style={{
                         position: "fixed",
@@ -587,6 +515,291 @@ const AuctionRoom = () => {
                     {warning}
                 </div>
             )}
+                        {/* Team Status */}
+                        <div
+    style={{
+        width:'200px',
+        padding: '20px',
+        border: '1px solid #ccc',
+        borderRadius: '10px',
+        backgroundColor: '#f9f9f9',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    }}
+>
+    <h4 style={{ color: '#555', marginBottom: '10px' }}>Team Status</h4>
+    <div
+        style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '20px',
+        }}
+    >
+        {/* Left Column */}
+        <ul style={{ listStyle: 'none', padding: '0', margin: '0', flex: 1 }}>
+            {teams
+                .filter((team) => team.name !== teamState?.teamName) // Exclude user's team
+                .filter((_, index) => index % 2 === 0) // First column: even-indexed teams
+                .map((team, index) => (
+                    <li
+                        key={index}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            marginBottom: '10px',
+                        }}
+                    >
+                        <span
+                            style={{
+                                width: '10px',
+                                height: '10px',
+                                borderRadius: '50%',
+                                backgroundColor: team.status ? 'green' : 'red',
+                                display: 'inline-block',
+                                marginRight: '10px',
+                            }}
+                        ></span>
+                        {team.name}
+                    </li>
+                ))}
+        </ul>
+
+        {/* Right Column */}
+        <ul style={{ listStyle: 'none', padding: '0', margin: '0', flex: 1 }}>
+            {teams
+                .filter((team) => team.name !== teamState?.teamName) // Exclude user's team
+                .filter((_, index) => index % 2 !== 0) // Second column: odd-indexed teams
+                .map((team, index) => (
+                    <li
+                        key={index}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            marginBottom: '10px',
+                        }}
+                    >
+                        <span
+                            style={{
+                                width: '10px',
+                                height: '10px',
+                                borderRadius: '50%',
+                                backgroundColor: team.status ? 'green' : 'red',
+                                display: 'inline-block',
+                                marginRight: '10px',
+                            }}
+                        ></span>
+                        {team.name}
+                    </li>
+                ))}
+        </ul>
+    </div>
+</div>
+
+</div>
+{currentAuctionItem ? (
+                            <div className='podium'
+                                style={{
+                                    marginTop: '130px',
+                                    border: '1px solid #ddd',
+                                    padding: '15px',
+                                    borderRadius: '15px',
+                                    width: '500px', // Set a fixed width for the auction item display
+                                }}
+                            >
+                                <h3>Current Auction Item</h3>
+                                <p>
+                                    <strong>{currentAuctionItem.name}</strong>
+                                </p>
+                                <p>Specialism: {currentAuctionItem.specialism}</p>
+                                <p>Base Price: ₹{currentAuctionItem.basePrice} lakhs</p>
+                                {validBid && (
+                                    <div>
+                                        <p>Current Bid: ₹{currentBid} lakhs</p>
+                                        <p>Highest Bidder: {currBidderName}</p>
+                                    </div>
+                                )}
+                                <button
+                                    onClick={placeBid}
+                                    style={{
+                                        marginTop: '10px',
+                                        backgroundColor: '#28a745',
+                                        color: 'white',
+                                        padding: '10px 15px',
+                                        border: 'none',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    Place Bid
+                                </button>
+                            </div>
+                        ) : (
+                            <p style={{ marginTop: '20px' }}>No item currently up for auction.</p>
+                        )}                
+</div>
+    
+                {/* RTM Section */}
+                {isRTMAvailable && (
+                    <div
+                        style={{
+                            marginTop: '20px',
+                            padding: '15px',
+                            border: '1px solid red',
+                            borderRadius: '5px',
+                            backgroundColor: '#f8d7da',
+                        }}
+                    >
+                        <p style={{ color: 'red', fontWeight: 'bold' }}>
+                            RTM Opportunity Available. Please respond within 15 seconds.
+                        </p>
+                        <button id="rtmButton" style={{ marginRight: '10px' }}>
+                            Use RTM
+                        </button>
+                        <button id="skipButton">Skip</button>
+                    </div>
+                )}
+    
+                {/* Final Bid Input */}
+                {showFinalBidInput && (
+                    <div
+                        style={{
+                            marginTop: '20px',
+                            padding: '15px',
+                            border: '1px solid #ddd',
+                            borderRadius: '5px',
+                            backgroundColor: '#f1f1f1',
+                        }}
+                    >
+                        <label htmlFor="finalBidInput" style={{ marginRight: '10px' }}>
+                            Enter your final bid:
+                        </label>
+                        <input
+                            type="number"
+                            id="finalBidInput"
+                            min="0"
+                            placeholder={`Greater than current bid`}
+                            style={{
+                                padding: '5px',
+                                borderRadius: '4px',
+                                border: '1px solid #ccc',
+                                marginRight: '10px',
+                            }}
+                        />
+                        <button
+                            id="submitFinalBid"
+                            style={{
+                                backgroundColor: '#007BFF',
+                                color: 'white',
+                                padding: '5px 10px',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Submit Final Bid
+                        </button>
+                    </div>
+                )}
+            </div>
+            {/* Right Column: Chat Feature */}
+            <div
+    style={{
+        flex: '1',
+        padding: '20px',
+        border: '1px solid #ccc',
+        borderRadius: '10px',
+        backgroundColor: '#f9f9f9',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '500px', // Increased overall height
+    }}
+>
+    <h4 style={{ marginBottom: '10px', color: '#555' }}>Chat</h4>
+    {/* Chat Messages */}
+    <div
+        style={{
+            flex: 1, // Makes the chat box grow to fill available space
+            overflowY: 'auto',
+            marginBottom: '15px',
+            border: '1px solid #ddd',
+            borderRadius: '5px',
+            padding: '10px',
+            backgroundColor: '#fff',
+        }}
+    >
+        {messages.length > 0 ? (
+            messages.map((msg, index) => (
+                <div
+                    key={index}
+                    style={{
+                        marginBottom: '10px',
+                        textAlign: msg.teamName === teamName ? 'right' : 'left',
+                    }}
+                >
+                    <div
+                        style={{
+                            display: 'inline-block',
+                            backgroundColor: msg.teamName === teamName ? '#DCF8C6' : '#f1f1f1',
+                            padding: '10px',
+                            borderRadius: '10px',
+                            maxWidth: '80%',
+                        }}
+                    >
+                        <p style={{ margin: 0, fontWeight: 'bold', fontSize: '12px' }}>{msg.teamName}</p>
+                        <p style={{ margin: 0 }}>{msg.message}</p>
+                        <p
+                            style={{
+                                margin: 0,
+                                fontSize: '10px',
+                                color: 'gray',
+                                textAlign: 'right',
+                            }}
+                        >
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                        </p>
+                    </div>
+                </div>
+            ))
+        ) : (
+            <p style={{ color: 'gray' }}>No messages yet.</p>
+        )}
+    </div>
+    {/* Input and Send Button */}
+    <div style={{ display: 'flex' }}>
+        <input
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            placeholder="Type a message"
+            onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                    handleSendMessage();
+                }
+            }}
+            style={{
+                flex: 1,
+                padding: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+                marginRight: '10px',
+            }}
+        />
+        <button
+            onClick={handleSendMessage}
+            style={{
+                padding: '10px 20px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+            }}
+        >
+            Send
+        </button>
+    </div>
+</div>
+
         </div>
     );
     

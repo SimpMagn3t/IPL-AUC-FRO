@@ -7,6 +7,7 @@ import CreateRoom from './components/CreateRoom';
 import Navbar from './components/Navbar';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import TestEx from "./TestEx";
+import JoinIssue from './components/JoinIssue';
 
 function App() {
   const location = useLocation();
@@ -26,6 +27,7 @@ function App() {
         <Route path='/create' element={<CreateRoom />} />
         <Route path='/' element={<JoinRoom />} />
         <Route path='/host' element={<HostJoin />} />
+        <Route path='/joinissue' element={<JoinIssue />} />
         <Route path='/hostauc/:roomCode/:hostJoinCode' element={<HostAucRoom />} />
         <Route path='/auction/:roomCode/:teamCode' element={<AuctionRoom />} />
         <Route path='/test' element={<TestEx/>} />
