@@ -9,6 +9,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import TestEx from "./TestEx";
 import JoinIssue from './components/JoinIssue';
 import ReportIssue from './components/ReportIssue';
+import { Analytics } from "@vercel/analytics/react"
 
 function App() {
   const location = useLocation();
@@ -32,7 +33,7 @@ function App() {
         <Route path='/hostauc/:roomCode/:hostJoinCode' element={<HostAucRoom />} />
         <Route path='/auction/:roomCode/:teamCode' element={<AuctionRoom />} />
         <Route path='/report' element={<ReportIssue/>} />
-
+        <Analytics />
       </Routes>
     </>
   );
