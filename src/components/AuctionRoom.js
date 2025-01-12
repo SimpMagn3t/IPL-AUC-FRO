@@ -52,14 +52,11 @@ const AuctionRoom = () => {
                     params: { roomCode, teamCode, teamName }, // Replace 'YourTeamName' with a dynamic value if necessary
                 });
                 setTeamState(response.data);
-                console.log('Team info fetched successfully:', teamState);
-                console.log('Team info fetched successfully:', response.data);
             } catch (error) {
                 console.error('Error fetching team info:', error);
                 setErrorMessage('Failed to fetch team info. Please try again.');
             }
         };
-        console.log('info', teamState);
         // fetchTeamInfo();
         fetchTeamInfo();
         if (!socketRef.current) {
@@ -67,12 +64,10 @@ const AuctionRoom = () => {
             socketRef.current = io(`${process.env.REACT_APP_API_URL}`);
 
             socketRef.current.on('connect', () => {
-                console.log(`Connected to the server with socket ID: ${socketRef.current.id}`);
 
                 // Emit joinRoom event after connection
                 setTimeout(() => {
                     socketRef.current.emit('joinRoom', { roomCode, teamCode });
-                    console.log(`Emitted joinRoom for roomCode: ${roomCode}, teamCode: ${teamCode}`);
                 }, 1000);
             });
 
@@ -82,14 +77,11 @@ const AuctionRoom = () => {
 
             // Listener for the current auction state
             socketRef.current.on('currentAuctionState', (state) => {
-                console.log('Current auction state received:', state);
                 setAuctionState(state); // Update state with server's data
             });
 
             // Listen for new auction item updates
             socketRef.current.on('newItemForAuction', (playerDetails) => {
-                console.log('New item received for auction:', playerDetails);
-                console.log(`hello`, teamState?.purse, teamState);
                 setAuctionState({
                     currentAuctionItem: playerDetails,
                     currentBid: playerDetails.basePrice,
@@ -99,14 +91,12 @@ const AuctionRoom = () => {
             });
             //recieve message
             socketRef.current.on('receiveMessage', (message) => {
-                console.log('Message received:', message);
                 if (message.teamName != teamName) {
                     setMessages((prevMessages) => [...prevMessages, message]);
                 }
             });
             // Listen for updated bid information
             socketRef.current.on('auctionUpdate', (data) => {
-                console.log('Auction updated:', data);
                 setAuctionState((prevState) => ({
                     ...prevState,
                     currentBid: data.newBidAmount,
@@ -116,7 +106,6 @@ const AuctionRoom = () => {
                 }));
             });
             socketRef.current.on('warnMsg', (warningMesssage) => {
-                console.log(warningMesssage);
                 setWarning(warningMesssage); // Set the warning message
                 setTimeout(() => {
                     setWarning(''); // Clear the warning after 3 seconds
@@ -124,15 +113,12 @@ const AuctionRoom = () => {
             });
             socketRef.current.on('playerUnsold', (m) => {
                 setAuctionState(defa);
-                console.log('Auction state set to defa', auctionState)
-                console.log(m);
                 setWarning(m); // Set the warning message
                 setTimeout(() => {
                     setWarning(''); // Clear the warning after 3 seconds
                 }, 5000);
             });
             socketRef.current.on('playerSold', async (soldState) => {
-                console.log('Player sold event received:', soldState);
                 setAuctionState(defa);
                 if (soldState.currBidder === teamCode) {
                     try {
@@ -140,7 +126,6 @@ const AuctionRoom = () => {
                             params: { roomCode, teamCode, teamName },
                         });
                         setTeamState(response.data); // Update the team state with fresh data from the server
-                        console.log('Updated team info:', response.data);
 
                         setWarning(`Congratulations! ${soldState.name} added to your squad for ₹${soldState.currentBid} Lakhs .`); // Show a success message
                     } catch (error) {
@@ -150,7 +135,6 @@ const AuctionRoom = () => {
                 } else {
                     setWarning(`Player sold to . ${soldState.currBidderName}`); // Show a different message for other teams
                 }
-                console.log('Auction state set to defa', auctionState);
                 // Clear the warning after a short delay
                 setTimeout(() => {
                     setWarning('');
@@ -166,12 +150,10 @@ const AuctionRoom = () => {
             });
             socketRef.current.on('rtmUpdate', async ({ soldState }) => {
                 if (soldState.rtmTeam === teamCode) {
-                    console.log(`sold11`, soldState);
                     setWarning(`RTM opportunity for team: ${soldState.rtmTeamName} do you want to use  RTM for ${soldState.name} `); // Set the warning message
                     setTimeout(() => {
                         setWarning('');
                     }, 5000);
-                    console.log(`RTM opportunity for team: ${soldState.rtmTeamName}`);
                     setIsRTMAvailable(true); // Show RTM buttons
 
                     // Clear any existing timer before starting a new one
@@ -181,7 +163,6 @@ const AuctionRoom = () => {
 
                     // Start a 15-second timer
                     rtmTimerRef.current = setTimeout(() => {
-                        console.log(`No response from team ${soldState.rtmTeamName}. Sending default RTM: false.`);
                         socketRef.current.emit('rtmResponse', { useRtm: false, roomCode, soldState });
                         setIsRTMAvailable(false); // Hide RTM buttons
                         rtmTimerRef.current = null; // Reset the timer reference
@@ -191,17 +172,14 @@ const AuctionRoom = () => {
                         if (rtmTimerRef.current) {
                             clearTimeout(rtmTimerRef.current); // Clear the timer
                             rtmTimerRef.current = null; // Reset the timer reference
-                            console.log("Timer cleared:", rtmTimerRef.current);
 
                         }
-                        console.log(`RTM response received: ${response}. Sending to backend...`);
                         soldState.useRtm = response; // Update soldState
                         socketRef.current.emit(
                             'rtmResponse',
                             { roomCode, soldState, useRtm: response },
                             (ack) => {
                                 if (ack.success) {
-                                    console.log('RTM Response processed successfully');
                                 } else {
                                     console.error('RTM Response failed:', ack.message);
                                 }
@@ -215,7 +193,6 @@ const AuctionRoom = () => {
                         const rtmButton = document.getElementById('rtmButton');
                         const skipButton = document.getElementById('skipButton');
                         if (rtmButton && skipButton) {
-                            console.log('Attaching event listeners to RTM buttons...');
                             rtmButton.onclick = () => handleRtmResponse(true);
                             skipButton.onclick = () => handleRtmResponse(false);
                         } else {
@@ -227,24 +204,18 @@ const AuctionRoom = () => {
                     setTimeout(() => {
                         setWarning('');
                     }, 5000);
-                    console.log(`RTM in progress. ${soldState.rtmTeamName} is choosing to use RTM or not.`);
                 }
             });
 
             socketRef.current.on('bidMatch', (soldState) => {
-                console.log('bid match aaya hai');
-                console.log('bid match', soldState.soldState.currBidder, teamCode);
 
                 if (soldState.soldState.currBidder === teamCode) {
-                    console.log("batao bid");
-                    console.log(teamState);
                     setWarning(`${soldState.soldState.rtmTeamName} Matches your bid. Please input your final bid.`); // Set the warning message
                     setShowFinalBidInput(true); // Show the final bid input field
 
                     const handleFinalBidSubmit = () => {
                         const currentBid = soldState.soldState.currentBid;
                         const teamPurseRemaining = teamState.purse; // Remaining purse for validation
-                        console.log('tst', teamPurseRemaining)
                         const bidInput = document.getElementById('finalBidInput');
                         const bidValue = parseFloat(bidInput?.value || currentBid); // Get input value safely
 
@@ -266,7 +237,6 @@ const AuctionRoom = () => {
                             return;
                         }
                         // Emit the final bid to the server
-                        console.log("Submitting final bid to the server...");
                         socketRef.current.emit('finalBid', { finalBid: bidValue, roomCode, soldState });
 
                         // Reset UI
@@ -280,16 +250,13 @@ const AuctionRoom = () => {
                         const submitButton = document.getElementById('submitFinalBid'); // Submit button
 
                         if (bidInput) {
-                            console.log('Attaching input field event listener...');
                             bidInput.addEventListener('input', (e) => {
-                                console.log('User is typing:', e.target.value); // Log input changes
                             });
                         } else {
                             console.error("Bid input field not found in the DOM.");
                         }
 
                         if (submitButton) {
-                            console.log('Attaching submit button event listener...');
                             submitButton.addEventListener('click', handleFinalBidSubmit);
                         } else {
                             console.error("Submit button not found in the DOM.");
@@ -300,19 +267,15 @@ const AuctionRoom = () => {
                     setTimeout(() => {
                         setWarning('');
                     }, 5000);
-                    console.log(`RTM in progress. ${soldState.soldState.currBidderName} is bidding.`);
                 }
             });
             socketRef.current.on('finalBidMatch', async ({ soldState, finalBid }) => {
-                console.log('final bid match aaya hai', soldState);
                 auctionState.currentBid = finalBid;
                 if (soldState.soldState.rtmTeam === teamCode) {
-                    console.log(`RTM opportunity for team: ${soldState.soldState.rtmTeamName} ${soldState.soldState.currBidderName} made a final bid of ₹${finalBid} lakhs.`);
                     setIsRTMAvailable(true); // Make RTM buttons visible
 
                     // Start a 15-second timer
                     const timer = setTimeout(() => {
-                        console.log(`No response from team ${soldState.rtmTeamName}. Sending default RTM: false.`);
                         socketRef.current.emit('rtmResponse', { useRtm: false, roomCode, soldState });
                         setIsRTMAvailable(false); // Hide RTM buttons
                     }, 30000);
@@ -320,13 +283,11 @@ const AuctionRoom = () => {
                     // Define handleRtmResponse inside rtmUpdate
                     const handleRtmResponse = (response) => {
                         clearTimeout(timer); // Clear the timer
-                        console.log(`RTM response received: ${response}. Sending to backend...`);
                         socketRef.current.emit(
                             'finalBidResponse',
                             { roomCode, soldState, finalBidResponse: response },
                             (ack) => {
                                 if (ack.success) {
-                                    console.log('RTM Response processed successfully');
                                 } else {
                                     console.error('RTM Response failed:', ack.message);
                                 }
@@ -340,7 +301,6 @@ const AuctionRoom = () => {
                         const rtmButton = document.getElementById('rtmButton');
                         const skipButton = document.getElementById('skipButton');
                         if (rtmButton && skipButton) {
-                            console.log('Attaching event listeners to RTM buttons...');
                             rtmButton.onclick = () => handleRtmResponse(true);
                             skipButton.onclick = () => handleRtmResponse(false);
                         } else {
@@ -353,14 +313,12 @@ const AuctionRoom = () => {
                     setTimeout(() => {
                         setWarning('');
                     }, 5000);
-                    console.log(`RTM in progress. ${soldState.soldState.rtmTeamName} is choosing to use RTM or not.`);
                 }
             });
         }
 
         return () => {
             if (socketRef.current) {
-                console.log('Cleaning up socket connection...');
                 socketRef.current.emit('resetJoinStatus', { roomCode, teamCode });
                 socketRef.current.disconnect();
                 socketRef.current = null; // Reset the socket instance
@@ -398,7 +356,6 @@ const AuctionRoom = () => {
         if (!validBid) bidIncrement = 0;
 
         const newBidAmount = currentBid + bidIncrement;
-        console.log('Placing bid:', teamState.purse, newBidAmount);
         if (socketRef.current && teamState.purse >= newBidAmount) {
             socketRef.current.emit('placeBid', {
                 roomCode,
@@ -421,7 +378,6 @@ const AuctionRoom = () => {
             };
             // Emit the message
             socketRef.current.emit('sendMessage', messageData);
-            console.log('Message sent:', messageData);
             // Add the message locally
             setMessages((prevMessages) => [
                 ...prevMessages,
@@ -435,7 +391,6 @@ const AuctionRoom = () => {
 
     const handleLogout = () => {
         if (socketRef?.current) {
-            console.log('Emitting resetJoinStatus and disconnecting...');
             socketRef.current.emit('resetJoinStatus', { roomCode, teamCode }, () => {
                 socketRef.current.disconnect();
                 socketRef.current = null; // Reset the socket instance

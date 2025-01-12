@@ -30,7 +30,6 @@ const HostAucRoom = () => {
         { name: 'host', status: false },
     ]);
     useEffect(() => {
-        console.log('abhi to ye hai', process.env.REACT_APP_API_URL);
         // Function to fetch players
         const fetchSold = async () => {
             try {
@@ -49,8 +48,6 @@ const HostAucRoom = () => {
             try {
                 const response = await axios.get(`${process.env.REACT_APP_API_URL}/players`);
                 let allPlayers = response.data || [];
-                console.log(`url to ye hai`, process.env.REACT_APP_API_URL);
-                console.log('all players', allPlayers);
                 allPlayers.sort((a, b) => a.SetNo - b.SetNo);
                 const soldIds = new Set(soldList);
                 const remainingPlayers = allPlayers.filter((player) => !soldIds.has(player._id));
@@ -66,7 +63,6 @@ const HostAucRoom = () => {
 
         const fetchData = async () => {
             const soldList = await fetchSold(); // Fetch sold players first
-            console.log("sold list fetched", soldList)
             await fetchPlayers(soldList); // Fetch and filter players next
         };
 
@@ -76,13 +72,11 @@ const HostAucRoom = () => {
             socketRef.current = io(`${process.env.REACT_APP_API_URL}`);
 
             socketRef.current.on('connect', () => {
-                console.log(`Host connected with socket ID: ${socketRef.current.id}`);
 
                 // Emit joinRoom event for the host after a slight delay
                 setTimeout(() => {
                     socketRef.current.emit('joinRoomAsHost', { roomCode });
                 }, 1000);
-                console.log(socketRef.data);
 
             });
 
@@ -90,16 +84,12 @@ const HostAucRoom = () => {
                 console.error('Connection error for host:', error.message);
             });
             socketRef.current.on('receiveMessage', (message) => {
-                console.log('Message received:', message);
                 if (message.teamName != 'Host') {
                     setMessages((prevMessages) => [...prevMessages, message]);
-                    console.log('Messages:', messages);
                 }
             });
             socketRef.current.on('currentAuctionStateHost', (state) => {
-                console.log('Current auction state received:', state);
                 setAuctionState(state.currentAuctionItem); // Update state with server's data
-                console.log('aab gyaa aa gaya', auctionState);
                 setValidBid(state.validBid);
                 const { currBidderName, currentBid } = state;
                 setAuctionState((prevState) => ({
@@ -110,27 +100,17 @@ const HostAucRoom = () => {
             });
             socketRef.current.on('playerSold', (soldState) => {
                 setAuctionState(null);
-                console.log(`auction state is`, auctionState)
                 setValidBid(false);
                 setWarnCount(0);
                 setPlayers((prevPlayers) => prevPlayers.filter((player) => player._id !== soldState.id));
             });
             socketRef.current.on('playerUnsold', () => {
                 setAuctionState(null);
-                console.log(`auction state is`, auctionState)
                 setValidBid(false);
                 setWarnCount(0);
             });
             // Listen for updates from the server
-            socketRef.current.on('roomUpdate', (data) => {
-                console.log('Room update received:', data);
-            });
-
-            socketRef.current.on('teamJoined', (teamInfo) => {
-                console.log(`Team joined: ${teamInfo.teamName} (${teamInfo.teamCode})`);
-            });
             socketRef.current.on('newUser', ({ teamOnStatus, message }) => {
-                console.log(message);
                 // Update the team status
                 setTeams(teamOnStatus);
             });
@@ -138,7 +118,6 @@ const HostAucRoom = () => {
                 console.error('Error:', errorMessage);
             });
             socketRef.current.on('auctionUpdate', (data) => {
-                console.log('Auction updated:', data);
                 setValidBid(true);
                 setWarnCount(0);
                 setAuctionState((prevState) => ({
@@ -180,7 +159,6 @@ const HostAucRoom = () => {
                 playerDetails,
             });
 
-            console.log(`New item added to the podium: ${player.FirstName} ${player.Surname}`);
         }
         else {
             console.error('Socket connection not established.');
@@ -210,7 +188,6 @@ const HostAucRoom = () => {
                     roomCode,
                     warningMesssage
                 });
-                console.log(warningMesssage);
             }
             else {
                 console.error('Socket connection not established.');
@@ -256,7 +233,6 @@ const HostAucRoom = () => {
             };
             // Emit the message
             socketRef.current.emit('sendMessage', messageData);
-            console.log('Message sent:', messageData);
             // Add the message locally
             setMessages((prevMessages) => [
                 ...prevMessages,

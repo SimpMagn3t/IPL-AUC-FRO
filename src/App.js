@@ -6,10 +6,9 @@ import HostAucRoom from './components/HostAucRoom';
 import CreateRoom from './components/CreateRoom';
 import Navbar from './components/Navbar';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import TestEx from "./TestEx";
 import JoinIssue from './components/JoinIssue';
 import ReportIssue from './components/ReportIssue';
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from '@vercel/analytics/react'; // Import Vercel Analytics
 
 function App() {
   const location = useLocation();
@@ -32,8 +31,9 @@ function App() {
         <Route path='/joinissue' element={<JoinIssue />} />
         <Route path='/hostauc/:roomCode/:hostJoinCode' element={<HostAucRoom />} />
         <Route path='/auction/:roomCode/:teamCode' element={<AuctionRoom />} />
-        <Route path='/report' element={<ReportIssue/>} />
+        <Route path='/report' element={<ReportIssue />} />
       </Routes>
+      <Analytics /> {/* Add the Analytics component */}
     </>
   );
 }
@@ -45,4 +45,3 @@ export default function RootApp() {
     </Router>
   );
 }
-
