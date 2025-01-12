@@ -10,27 +10,27 @@ const HostAucRoom = () => {
     const [error, setError] = useState(null); // Error state
     const [auctionState, setAuctionState] = useState(null);
     const [validBid, setValidBid] = useState(false);
-    const[soldList,setSoldList]=useState(null);
-    const[unsoldList,setUnsoldList]=useState(null);
+    const [soldList, setSoldList] = useState(null);
+    const [unsoldList, setUnsoldList] = useState(null);
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     // Ref to ensure a single socket instance
     const socketRef = useRef(null);
     const [teams, setTeams] = useState([
-            { name: 'CSK', status: false },
-            { name: 'DC', status: false },
-            { name: 'GT', status: false },
-            { name: 'KKR', status: false },
-            { name: 'LSG', status: false },
-            { name: 'MI', status: false },
-            { name: 'PBKS', status: false },
-            { name: 'RCB', status: false },
-            { name: 'RR', status: false },
-            { name: 'SRH', status: false },
-            { name: 'host', status: false },
-          ]);
+        { name: 'CSK', status: false },
+        { name: 'DC', status: false },
+        { name: 'GT', status: false },
+        { name: 'KKR', status: false },
+        { name: 'LSG', status: false },
+        { name: 'MI', status: false },
+        { name: 'PBKS', status: false },
+        { name: 'RCB', status: false },
+        { name: 'RR', status: false },
+        { name: 'SRH', status: false },
+        { name: 'host', status: false },
+    ]);
     useEffect(() => {
-        console.log('abhi to ye hai',process.env.REACT_APP_API_URL);
+        console.log('abhi to ye hai', process.env.REACT_APP_API_URL);
         // Function to fetch players
         const fetchSold = async () => {
             try {
@@ -44,17 +44,17 @@ const HostAucRoom = () => {
                 return []; // Return empty array in case of an error
             }
         };
-    
+
         const fetchPlayers = async (soldList) => {
             try {
                 const response = await axios.get(`${process.env.REACT_APP_API_URL}/players`);
-                let allPlayers = response.data|| [];
-                console.log(`url to ye hai`,process.env.REACT_APP_API_URL);
-                console.log('all players',allPlayers);
+                let allPlayers = response.data || [];
+                console.log(`url to ye hai`, process.env.REACT_APP_API_URL);
+                console.log('all players', allPlayers);
                 allPlayers.sort((a, b) => a.SetNo - b.SetNo);
                 const soldIds = new Set(soldList);
                 const remainingPlayers = allPlayers.filter((player) => !soldIds.has(player._id));
-    
+
                 setPlayers(remainingPlayers); // Update players with filtered list
                 setLoading(false); // Stop loading indicator
             } catch (error) {
@@ -63,13 +63,13 @@ const HostAucRoom = () => {
                 setLoading(false);
             }
         };
-    
+
         const fetchData = async () => {
             const soldList = await fetchSold(); // Fetch sold players first
-            console.log("sold list fetched",soldList)
+            console.log("sold list fetched", soldList)
             await fetchPlayers(soldList); // Fetch and filter players next
         };
-    
+
         fetchData();
         if (!socketRef.current) {
             console.log('Creating socket connection for host...');
@@ -77,13 +77,13 @@ const HostAucRoom = () => {
 
             socketRef.current.on('connect', () => {
                 console.log(`Host connected with socket ID: ${socketRef.current.id}`);
-                
+
                 // Emit joinRoom event for the host after a slight delay
                 setTimeout(() => {
                     socketRef.current.emit('joinRoomAsHost', { roomCode });
                 }, 1000);
                 console.log(socketRef.data);
-                
+
             });
 
             socketRef.current.on('connect_error', (error) => {
@@ -91,36 +91,36 @@ const HostAucRoom = () => {
             });
             socketRef.current.on('receiveMessage', (message) => {
                 console.log('Message received:', message);
-                if(message.teamName!='Host'){
+                if (message.teamName != 'Host') {
                     setMessages((prevMessages) => [...prevMessages, message]);
                     console.log('Messages:', messages);
                 }
             });
             socketRef.current.on('currentAuctionStateHost', (state) => {
-              console.log('Current auction state received:', state);
-              setAuctionState(state.currentAuctionItem); // Update state with server's data
-              console.log('aab gyaa aa gaya',auctionState);
-              setValidBid(state.validBid);
-              const{currBidderName,currentBid}=state;  
-              setAuctionState((prevState) => ({
-                ...prevState,
-                currentBid,
-                currBidderName,
-            }));
-          });
-          socketRef.current.on('playerSold', (soldState) => {
-            setAuctionState(null);
-            console.log(`auction state is`,auctionState)
-            setValidBid(false);
-            setWarnCount(0);
-            setPlayers((prevPlayers) => prevPlayers.filter((player) => player._id !== soldState.id));
-          });
-          socketRef.current.on('playerUnsold', () => {
-            setAuctionState(null);
-            console.log(`auction state is`,auctionState)
-            setValidBid(false);
-            setWarnCount(0);
-          });
+                console.log('Current auction state received:', state);
+                setAuctionState(state.currentAuctionItem); // Update state with server's data
+                console.log('aab gyaa aa gaya', auctionState);
+                setValidBid(state.validBid);
+                const { currBidderName, currentBid } = state;
+                setAuctionState((prevState) => ({
+                    ...prevState,
+                    currentBid,
+                    currBidderName,
+                }));
+            });
+            socketRef.current.on('playerSold', (soldState) => {
+                setAuctionState(null);
+                console.log(`auction state is`, auctionState)
+                setValidBid(false);
+                setWarnCount(0);
+                setPlayers((prevPlayers) => prevPlayers.filter((player) => player._id !== soldState.id));
+            });
+            socketRef.current.on('playerUnsold', () => {
+                setAuctionState(null);
+                console.log(`auction state is`, auctionState)
+                setValidBid(false);
+                setWarnCount(0);
+            });
             // Listen for updates from the server
             socketRef.current.on('roomUpdate', (data) => {
                 console.log('Room update received:', data);
@@ -129,11 +129,11 @@ const HostAucRoom = () => {
             socketRef.current.on('teamJoined', (teamInfo) => {
                 console.log(`Team joined: ${teamInfo.teamName} (${teamInfo.teamCode})`);
             });
-            socketRef.current.on('newUser', ({teamOnStatus,message}) => {
+            socketRef.current.on('newUser', ({ teamOnStatus, message }) => {
                 console.log(message);
                 // Update the team status
                 setTeams(teamOnStatus);
-              });
+            });
             socketRef.current.on('error', (errorMessage) => {
                 console.error('Error:', errorMessage);
             });
@@ -174,67 +174,66 @@ const HostAucRoom = () => {
         setValidBid(false);
         setAuctionState(playerDetails);
         if (socketRef.current) {
-          // Emit the new item to all participants in the room
-          socketRef.current.emit('newItem', {
-              roomCode, 
-              playerDetails,
-          });
-  
-          console.log(`New item added to the podium: ${player.FirstName} ${player.Surname}`);
-        } 
-        else{
-          console.error('Socket connection not established.');
-        }
-  };
-  const [warnCount, setWarnCount] = useState(0);
-  const issueWarning = () => {
-    let warningMesssage='';
-    if(warnCount<3){
-    if(warnCount===0){
-        const newBidAmount=bidInCalc(auctionState.currentBid);
-        warningMesssage = `Any team for ₹${newBidAmount}`;
-    }
-    if(warnCount===1){
-        warningMesssage = `No bids then?`;
-    }
-    if(warnCount===2){
-        if(validBid){
-            warningMesssage = ` we will the sell the player to ${auctionState.currBidderName},last warning everyone`;
-        }
-        else
-            warningMesssage='The player will remain usold then,last warning to everyone';
-    }
-    if (socketRef.current) {
-        // Emit the new item to all participants in the room
-        socketRef.current.emit('warnMsg', {
-            roomCode,
-            warningMesssage
-        });
-        console.log(warningMesssage);
-      } 
-      else{
-        console.error('Socket connection not established.');
-      }
-    setWarnCount(warnCount+1);
-}   
-    else if(warnCount===3){
-        if(validBid){
-            socketRef.current.emit('playerSoldServ', {
+            // Emit the new item to all participants in the room
+            socketRef.current.emit('newItem', {
                 roomCode,
-                soldState:auctionState
+                playerDetails,
             });
+
+            console.log(`New item added to the podium: ${player.FirstName} ${player.Surname}`);
         }
-        else
-        {
-            socketRef.current.emit('playerUnsoldServ', {
-                roomCode
-            });
-            warningMesssage='The player will remain usold then';
+        else {
+            console.error('Socket connection not established.');
         }
-    }
-};
-  const bidInCalc=(currentBid)=>{
-    let bidIncrement = 0;
+    };
+    const [warnCount, setWarnCount] = useState(0);
+    const issueWarning = () => {
+        let warningMesssage = '';
+        if (warnCount < 3) {
+            if (warnCount === 0) {
+                const newBidAmount = bidInCalc(auctionState.currentBid);
+                warningMesssage = `Any team for ₹${newBidAmount}`;
+            }
+            if (warnCount === 1) {
+                warningMesssage = `No bids then?`;
+            }
+            if (warnCount === 2) {
+                if (validBid) {
+                    warningMesssage = ` we will the sell the player to ${auctionState.currBidderName},last warning everyone`;
+                }
+                else
+                    warningMesssage = 'The player will remain usold then,last warning to everyone';
+            }
+            if (socketRef.current) {
+                // Emit the new item to all participants in the room
+                socketRef.current.emit('warnMsg', {
+                    roomCode,
+                    warningMesssage
+                });
+                console.log(warningMesssage);
+            }
+            else {
+                console.error('Socket connection not established.');
+            }
+            setWarnCount(warnCount + 1);
+        }
+        else if (warnCount === 3) {
+            if (validBid) {
+                socketRef.current.emit('playerSoldServ', {
+                    roomCode,
+                    soldState: auctionState
+                });
+            }
+            else {
+                socketRef.current.emit('playerUnsoldServ', {
+                    roomCode
+                });
+                warningMesssage = 'The player will remain usold then';
+            }
+        }
+    };
+    const bidInCalc = (currentBid) => {
+        let bidIncrement = 0;
         if (currentBid < 200) {
             bidIncrement = 10;
         } else if (currentBid >= 200 && currentBid < 500) {
@@ -245,40 +244,40 @@ const HostAucRoom = () => {
 
         if (!validBid) bidIncrement = 0;
 
-    const newBidAmount = currentBid + bidIncrement;
-    return newBidAmount;
-  }
-  const handleSendMessage = () => {
-    if (inputMessage.trim()) {
-        const messageData = {
-            roomCode,
-            teamName:'Host',
-            message: inputMessage,
-        };
-        // Emit the message
-        socketRef.current.emit('sendMessage', messageData);
-        console.log('Message sent:', messageData);
-        // Add the message locally
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { ...messageData, timestamp: new Date().toISOString() },
-        ]);
-
-        // Clear the input
-        setInputMessage('');
+        const newBidAmount = currentBid + bidIncrement;
+        return newBidAmount;
     }
-};
-  const [searchTerm, setSearchTerm] = useState(''); // State for search input
+    const handleSendMessage = () => {
+        if (inputMessage.trim()) {
+            const messageData = {
+                roomCode,
+                teamName: 'Host',
+                message: inputMessage,
+            };
+            // Emit the message
+            socketRef.current.emit('sendMessage', messageData);
+            console.log('Message sent:', messageData);
+            // Add the message locally
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { ...messageData, timestamp: new Date().toISOString() },
+            ]);
+
+            // Clear the input
+            setInputMessage('');
+        }
+    };
+    const [searchTerm, setSearchTerm] = useState(''); // State for search input
 
     // Filtered players based on search term
     const filteredPlayers = players.filter((player) => {
         const fullName = `${player.FirstName} ${player.Surname}`.toLowerCase();
         return (
-            fullName.includes(searchTerm.toLowerCase()) || 
+            fullName.includes(searchTerm.toLowerCase()) ||
             player.Specialism.toLowerCase().includes(searchTerm.toLowerCase())
         );
     });
-  
+
     return (
         <div style={{ fontFamily: 'Arial, sans-serif', margin: '20px', padding: '10px' }}>
             <h2 style={{ textAlign: 'center', color: '#333', marginBottom: '20px' }}>Host Auction Room</h2>
@@ -353,86 +352,86 @@ const HostAucRoom = () => {
                             <p style={{ color: 'gray' }}>No player on the podium.</p>
                         )}
                     </div>
-    
-                                            {/* Team Status */}
-                                            <div
-    style={{
-        padding: '20px',
-        border: '1px solid #ccc',
-        borderRadius: '10px',
-        backgroundColor: '#f9f9f9',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    }}
->
-    <h4 style={{ color: '#555', marginBottom: '10px' }}>Team Status</h4>
-    <div
-        style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: '20px',
-        }}
-    >
-        {/* Left Column */}
-        <ul style={{ listStyle: 'none', padding: '0', margin: '0', flex: 1 }}>
-            {teams
-                .filter((team) => team.name !== 'host') // Exclude user's team
-                .filter((_, index) => index % 2 === 0) // First column: even-indexed teams
-                .map((team, index) => (
-                    <li
-                        key={index}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            marginBottom: '10px',
-                        }}
-                    >
-                        <span
-                            style={{
-                                width: '10px',
-                                height: '10px',
-                                borderRadius: '50%',
-                                backgroundColor: team.status ? 'green' : 'red',
-                                display: 'inline-block',
-                                marginRight: '10px',
-                            }}
-                        ></span>
-                        {team.name}
-                    </li>
-                ))}
-        </ul>
 
-        {/* Right Column */}
-        <ul style={{ listStyle: 'none', padding: '0', margin: '0', flex: 1 }}>
-            {teams
-                .filter((team) => team.name !== 'host') // Exclude user's team
-                .filter((_, index) => index % 2 !== 0) // Second column: odd-indexed teams
-                .map((team, index) => (
-                    <li
-                        key={index}
+                    {/* Team Status */}
+                    <div
                         style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            marginBottom: '10px',
+                            padding: '20px',
+                            border: '1px solid #ccc',
+                            borderRadius: '10px',
+                            backgroundColor: '#f9f9f9',
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                         }}
                     >
-                        <span
+                        <h4 style={{ color: '#555', marginBottom: '10px' }}>Team Status</h4>
+                        <div
                             style={{
-                                width: '10px',
-                                height: '10px',
-                                borderRadius: '50%',
-                                backgroundColor: team.status ? 'green' : 'red',
-                                display: 'inline-block',
-                                marginRight: '10px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                gap: '20px',
                             }}
-                        ></span>
-                        {team.name}
-                    </li>
-                ))}
-        </ul>
-    </div>
-</div>
+                        >
+                            {/* Left Column */}
+                            <ul style={{ listStyle: 'none', padding: '0', margin: '0', flex: 1 }}>
+                                {teams
+                                    .filter((team) => team.name !== 'host') // Exclude user's team
+                                    .filter((_, index) => index % 2 === 0) // First column: even-indexed teams
+                                    .map((team, index) => (
+                                        <li
+                                            key={index}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                marginBottom: '10px',
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    width: '10px',
+                                                    height: '10px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: team.status ? 'green' : 'red',
+                                                    display: 'inline-block',
+                                                    marginRight: '10px',
+                                                }}
+                                            ></span>
+                                            {team.name}
+                                        </li>
+                                    ))}
+                            </ul>
+
+                            {/* Right Column */}
+                            <ul style={{ listStyle: 'none', padding: '0', margin: '0', flex: 1 }}>
+                                {teams
+                                    .filter((team) => team.name !== 'host') // Exclude user's team
+                                    .filter((_, index) => index % 2 !== 0) // Second column: odd-indexed teams
+                                    .map((team, index) => (
+                                        <li
+                                            key={index}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                marginBottom: '10px',
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    width: '10px',
+                                                    height: '10px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: team.status ? 'green' : 'red',
+                                                    display: 'inline-block',
+                                                    marginRight: '10px',
+                                                }}
+                                            ></span>
+                                            {team.name}
+                                        </li>
+                                    ))}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-    
+
                 {/* Center Column: Players List */}
                 <div
                     style={{
@@ -519,112 +518,122 @@ const HostAucRoom = () => {
                         <p>No players available for the auction.</p>
                     )}
                 </div>
-    
-                {/* Right Column: Chat Feature */}
+
                 <div
-    style={{
-        flex: '1',
-        padding: '20px',
-        border: '1px solid #ccc',
-        borderRadius: '10px',
-        backgroundColor: '#f9f9f9',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '500px', // Increased overall height
-    }}
->
-    <h4 style={{ marginBottom: '10px', color: '#555' }}>Chat</h4>
-    {/* Chat Messages */}
-    <div
-        style={{
-            flex: 1, // Makes the chat box grow to fill available space
-            overflowY: 'auto',
-            marginBottom: '15px',
-            border: '1px solid #ddd',
-            borderRadius: '5px',
-            padding: '10px',
-            backgroundColor: '#fff',
-        }}
-    >
-        {messages.length > 0 ? (
-            messages.map((msg, index) => (
-                <div
-                    key={index}
                     style={{
-                        marginBottom: '10px',
-                        textAlign: msg.teamName === "Host" ? 'right' : 'left',
+                        flex: '1',
+                        padding: '20px',
+                        border: '1px solid #ccc',
+                        borderRadius: '10px',
+                        backgroundColor: '#F5F7FA', // Light background
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '500px',
                     }}
                 >
+                    <h4 style={{ marginBottom: '10px', color: '#2C3E50' }}>Chat</h4>
+                    {/* Chat Messages */}
                     <div
                         style={{
-                            display: 'inline-block',
-                            backgroundColor: msg.teamName === "Host" ? '#DCF8C6' : '#f1f1f1',
+                            flex: 1,
+                            overflowY: 'auto',
+                            marginBottom: '15px',
+                            border: '1px solid #ddd',
+                            borderRadius: '5px',
                             padding: '10px',
-                            borderRadius: '10px',
-                            maxWidth: '80%',
+                            backgroundColor: '#FFFFFF', // White background for the chat area
                         }}
                     >
-                        <p style={{ margin: 0, fontWeight: 'bold', fontSize: '12px' }}>{msg.teamName}</p>
-                        <p style={{ margin: 0 }}>{msg.message}</p>
-                        <p
+                        {messages.length > 0 ? (
+                            messages.map((msg, index) => (
+                                <div
+                                    key={index}
+                                    style={{
+                                        marginBottom: '10px',
+                                        textAlign: msg.teamName === 'Host' ? 'right' : 'left',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: 'inline-block',
+                                            backgroundColor:
+                                                msg.teamName === 'Host' ? '#A3E4D7' : '#F9E79F', // Green for own messages, yellow for others
+                                            padding: '10px',
+                                            borderRadius: '10px',
+                                            maxWidth: '80%',
+                                        }}
+                                    >
+                                        <p
+                                            style={{
+                                                margin: 0,
+                                                fontWeight: 'bold',
+                                                fontSize: '12px',
+                                                color: '#34495E', // Dark grey for sender name
+                                            }}
+                                        >
+                                            {msg.teamName}
+                                        </p>
+                                        <p style={{ margin: 0, color: '#2C3E50' }}>{msg.message}</p>
+                                        <p
+                                            style={{
+                                                margin: 0,
+                                                fontSize: '10px',
+                                                color: 'gray',
+                                                textAlign: 'right',
+                                            }}
+                                        >
+                                            {new Date(msg.timestamp).toLocaleTimeString()}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p style={{ color: 'gray' }}>No messages yet.</p>
+                        )}
+                    </div>
+                    {/* Input and Send Button */}
+                    <div style={{ display: 'flex' }}>
+                        <input
+                            type="text"
+                            value={inputMessage}
+                            onChange={(e) => setInputMessage(e.target.value)}
+                            placeholder="Type a message"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleSendMessage();
+                                }
+                            }}
                             style={{
-                                margin: 0,
-                                fontSize: '10px',
-                                color: 'gray',
-                                textAlign: 'right',
+                                flex: 1,
+                                padding: '10px',
+                                borderRadius: '5px',
+                                border: '1px solid #BDC3C7',
+                                marginRight: '10px',
+                                backgroundColor: '#ECF0F1', // Light grey for input
+                            }}
+                        />
+                        <button
+                            onClick={handleSendMessage}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: '#5DADE2', // Vibrant blue for send button
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
                             }}
                         >
-                            {new Date(msg.timestamp).toLocaleTimeString()}
-                        </p>
+                            Send
+                        </button>
                     </div>
                 </div>
-            ))
-        ) : (
-            <p style={{ color: 'gray' }}>No messages yet.</p>
-        )}
-    </div>
-    {/* Input and Send Button */}
-    <div style={{ display: 'flex' }}>
-        <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Type a message"
-            onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                    handleSendMessage();
-                }
-            }}
-            style={{
-                flex: 1,
-                padding: '10px',
-                borderRadius: '5px',
-                border: '1px solid #ccc',
-                marginRight: '10px',
-            }}
-        />
-        <button
-            onClick={handleSendMessage}
-            style={{
-                padding: '10px 20px',
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-            }}
-        >
-            Send
-        </button>
-    </div>
-</div>
 
             </div>
         </div>
     );
-    
-    
+
+
 };
 
 export default HostAucRoom;
