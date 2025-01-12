@@ -33,7 +33,6 @@ function App() {
         <Route path='/hostauc/:roomCode/:hostJoinCode' element={<HostAucRoom />} />
         <Route path='/auction/:roomCode/:teamCode' element={<AuctionRoom />} />
         <Route path='/report' element={<ReportIssue/>} />
-        <Analytics />
       </Routes>
     </>
   );
