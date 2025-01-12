@@ -450,6 +450,8 @@ const AuctionRoom = () => {
             <div
                 style={{
                     width: '300px',
+                    minWidth: '300px',
+                    flexShrink: 0,
                     transition: 'width 0.3s ease',
                     backgroundColor: '#ffffff', // White background for a clean look
                     boxShadow: '2px 0 8px rgba(0,0,0,0.2)', // Darker shadow for better contrast
