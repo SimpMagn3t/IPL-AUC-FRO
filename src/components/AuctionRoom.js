@@ -16,6 +16,7 @@ const AuctionRoom = () => {
     const [showFinalBidInput, setShowFinalBidInput] = useState(false);
     const rtmTimerRef = useRef(null); // Persistent timer reference
     const navigate = useNavigate();
+    const [purse, setPurse] = useState(0);
 
     const [teams, setTeams] = useState([
         { name: 'CSK', status: false },
@@ -52,6 +53,7 @@ const AuctionRoom = () => {
                     params: { roomCode, teamCode, teamName }, // Replace 'YourTeamName' with a dynamic value if necessary
                 });
                 setTeamState(response.data);
+                setPurse(response.data.purse);
             } catch (error) {
                 console.error('Error fetching team info:', error);
                 setErrorMessage('Failed to fetch team info. Please try again.');
@@ -160,19 +162,18 @@ const AuctionRoom = () => {
                     if (rtmTimerRef.current) {
                         clearTimeout(rtmTimerRef.current);
                     }
-
                     // Start a 15-second timer
                     rtmTimerRef.current = setTimeout(() => {
                         socketRef.current.emit('rtmResponse', { useRtm: false, roomCode, soldState });
                         setIsRTMAvailable(false); // Hide RTM buttons
                         rtmTimerRef.current = null; // Reset the timer reference
-                    }, 30000);
+                    }, 40000);
 
                     const handleRtmResponse = (response) => {
                         if (rtmTimerRef.current) {
                             clearTimeout(rtmTimerRef.current); // Clear the timer
                             rtmTimerRef.current = null; // Reset the timer reference
-
+                            console.log('RTM timer cleared', rtmTimerRef.current);
                         }
                         soldState.useRtm = response; // Update soldState
                         socketRef.current.emit(
@@ -210,14 +211,22 @@ const AuctionRoom = () => {
             socketRef.current.on('bidMatch', (soldState) => {
 
                 if (soldState.soldState.currBidder === teamCode) {
-                    setWarning(`${soldState.soldState.rtmTeamName} Matches your bid. Please input your final bid.`); // Set the warning message
+                    setWarning(`${soldState.soldState.rtmTeamName} Matches your bid. Please input your final bid.`);
+                    setTimeout(() => {
+                        setWarning('');
+                    }, 5000);
                     setShowFinalBidInput(true); // Show the final bid input field
 
                     const handleFinalBidSubmit = () => {
                         const currentBid = soldState.soldState.currentBid;
-                        const teamPurseRemaining = teamState.purse; // Remaining purse for validation
+                        console.log(`1purse`,purse);
+                        // const teamPurseRemaining = await axios.get(`${process.env.REACT_APP_API_URL}/getTeamInfo`, {
+                        //     params: { roomCode, teamCode, teamName },
+                        // });
+                        const teamPurseRemaining = purse;
                         const bidInput = document.getElementById('finalBidInput');
                         const bidValue = parseFloat(bidInput?.value || currentBid); // Get input value safely
+                        console.log(bidValue);
 
                         // Validation checks
                         if (isNaN(bidValue)) {
@@ -251,6 +260,7 @@ const AuctionRoom = () => {
 
                         if (bidInput) {
                             bidInput.addEventListener('input', (e) => {
+                                console.log(e.target.value);
                             });
                         } else {
                             console.error("Bid input field not found in the DOM.");
@@ -270,6 +280,10 @@ const AuctionRoom = () => {
                 }
             });
             socketRef.current.on('finalBidMatch', async ({ soldState, finalBid }) => {
+                setAuctionState((prevState) => ({
+                    ...prevState,
+                    currentBid: finalBid,
+                }));
                 auctionState.currentBid = finalBid;
                 if (soldState.soldState.rtmTeam === teamCode) {
                     setIsRTMAvailable(true); // Make RTM buttons visible

@@ -14,6 +14,7 @@ const HostAucRoom = () => {
     const [unsoldList, setUnsoldList] = useState(null);
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
+    const [warning, setWarning] = useState('');
     // Ref to ensure a single socket instance
     const socketRef = useRef(null);
     const [teams, setTeams] = useState([
@@ -99,6 +100,10 @@ const HostAucRoom = () => {
                 }));
             });
             socketRef.current.on('playerSold', (soldState) => {
+                setWarning(`Player sold to . ${soldState.currBidderName}`);
+                setTimeout(() => {
+                    setWarning('');
+                }, 5000);
                 setAuctionState(null);
                 setValidBid(false);
                 setWarnCount(0);
@@ -113,6 +118,22 @@ const HostAucRoom = () => {
             socketRef.current.on('newUser', ({ teamOnStatus, message }) => {
                 // Update the team status
                 setTeams(teamOnStatus);
+            });
+            socketRef.current.on('rtmUpdate', ({ soldState, message }) => {
+                setWarning(`RTM in progress. ${soldState.rtmTeamName} is choosing to use RTM or not.`);
+                    setTimeout(() => {
+                        setWarning('');
+                    }, 5000);
+            });
+            socketRef.current.on('finalBidMatch', ({ soldState, finalBid }) => {
+                setAuctionState((prevState) => ({
+                    ...prevState,
+                    currentBid: finalBid,
+                }));
+                setWarning(`RTM opportunity for team: ${soldState.soldState.rtmTeamName} ${soldState.soldState.currBidderName} made a final bid of ₹${finalBid} lakhs.`);
+                    setTimeout(() => {
+                        setWarning('');
+                    }, 5000);
             });
             socketRef.current.on('error', (errorMessage) => {
                 console.error('Error:', errorMessage);
@@ -494,7 +515,24 @@ const HostAucRoom = () => {
                         <p>No players available for the auction.</p>
                     )}
                 </div>
-
+                {warning && (
+                            <div
+                                style={{
+                                    position: "fixed",
+                                    bottom: "200px",
+                                    left: "50%",
+                                    transform: "translateX(-50%)",
+                                    backgroundColor: "#f8d7da",
+                                    color: "#721c24",
+                                    padding: "15px 30px",
+                                    borderRadius: "5px",
+                                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                                    animation: "popOut 4s ease-out",
+                                }}
+                            >
+                                {warning}
+                            </div>
+                        )}
                 <div
                     style={{
                         flex: '1',
