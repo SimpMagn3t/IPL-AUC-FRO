@@ -16,7 +16,7 @@ const AuctionRoom = () => {
     const [showFinalBidInput, setShowFinalBidInput] = useState(false);
     const rtmTimerRef = useRef(null); // Persistent timer reference
     const navigate = useNavigate();
-    const [purse, setPurse] = useState(0);
+    const [purse, setPurse] = useState();
 
     const [teams, setTeams] = useState([
         { name: 'CSK', status: false },
