@@ -15,6 +15,7 @@ const HostAucRoom = () => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [warning, setWarning] = useState('');
+    const[showButton,setShowButton]=useState(false);
     // Ref to ensure a single socket instance
     const socketRef = useRef(null);
     const [teams, setTeams] = useState([
@@ -98,6 +99,9 @@ const HostAucRoom = () => {
                     currentBid,
                     currBidderName,
                 }));
+                if(state.currentAuctionItem){
+                    setShowButton(true);
+                }
             });
             socketRef.current.on('playerSold', (soldState) => {
                 setWarning(`Player sold to . ${soldState.currBidderName}`);
@@ -161,6 +165,7 @@ const HostAucRoom = () => {
         };
     }, [roomCode]);
     const addToPod = (player) => {
+        setShowButton(true);
         const playerDetails = {
             id: player._id,
             setNo: player.SetNo,
@@ -228,6 +233,7 @@ const HostAucRoom = () => {
                 });
                 warningMesssage = 'The player will remain usold then';
             }
+            setShowButton(false);
         }
     };
     const bidInCalc = (currentBid) => {
@@ -315,6 +321,7 @@ const HostAucRoom = () => {
                                         <p>
                                             <strong>Highest Bidder:</strong> {auctionState.currBidderName}
                                         </p>
+                                        {showButton ? 
                                         <button
                                             onClick={() => issueWarning()}
                                             style={{
@@ -328,6 +335,7 @@ const HostAucRoom = () => {
                                         >
                                             Sell Player ({3 - warnCount})
                                         </button>
+                                        : null}
                                     </div>
                                 ) : (
                                     <button

@@ -46,6 +46,14 @@ const AuctionRoom = () => {
     const [inputMessage, setInputMessage] = useState('');
     const socketRef = useRef(null); // Ref to ensure a single socket instance
 
+    const handleBeforeUnload = () => {
+        if (socketRef.current) {
+            console.log('Disconnecting socket on beforeunload...');
+            socketRef.current.emit('resetJoinStatus', { roomCode, teamCode });
+            socketRef.current.disconnect();
+            socketRef.current = null; // Reset the socket instance
+        }
+    };
     useEffect(() => {
         const fetchTeamInfo = async () => {
             try {
@@ -143,6 +151,7 @@ const AuctionRoom = () => {
                 }, 5000);
             });
             socketRef.current.on('newUser', ({ teamOnStatus, message }) => {
+                console.log(message);
                 setWarning(message);
                 setTimeout(() => {
                     setWarning('');
@@ -331,13 +340,18 @@ const AuctionRoom = () => {
             });
         }
 
-        return () => {
-            if (socketRef.current) {
-                socketRef.current.emit('resetJoinStatus', { roomCode, teamCode });
-                socketRef.current.disconnect();
-                socketRef.current = null; // Reset the socket instance
-            }
-        };
+     window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup
+    return () => {
+        console.log('Cleaning up socket connection...');
+        if (socketRef.current) {
+            socketRef.current.emit('resetJoinStatus', { roomCode, teamCode });
+            socketRef.current.disconnect();
+            socketRef.current = null; // Reset the socket instance
+        }
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
 
 
     }, [roomCode, teamCode]);
