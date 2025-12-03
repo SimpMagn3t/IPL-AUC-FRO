@@ -4,6 +4,7 @@ import JoinRoom from './components/JoinRoom';  // Import JoinRoom with correct c
 import HostJoin from './components/HostJoin';
 import HostAucRoom from './components/HostAucRoom';
 import CreateRoom from './components/CreateRoom';
+import Support from './components/Support';
 import Navbar from './components/Navbar';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import JoinIssue from './components/JoinIssue';
@@ -28,6 +29,7 @@ function App() {
         <Route path='/create' element={<CreateRoom />} />
         <Route path='/' element={<JoinRoom />} />
         <Route path='/host' element={<HostJoin />} />
+        <Route path='/support' element={<Support />} />
         <Route path='/joinissue' element={<JoinIssue />} />
         <Route path='/hostauc/:roomCode/:hostJoinCode' element={<HostAucRoom />} />
         <Route path='/auction/:roomCode/:teamCode' element={<AuctionRoom />} />

@@ -122,9 +122,7 @@ return (
               <strong>Team Code:</strong> {team.teamCode}
             </div>
             <button
-              onClick={() => copyToClipboard(`Team Name:${team.teamName}
-                Room Code:${teamdata.roomCode}
-                Team Code:${team.teamCode}`)}
+              onClick={() => copyToClipboard(`Team Name: ${team.teamName} Room Code: ${teamdata.roomCode} Team Code: ${team.teamCode}`)}
               style={{
                 background: "#2196F3",
                 color: "#ffffff",
@@ -185,7 +183,47 @@ return (
         >
           Join Room
         </button>
+        <div
+    style={{
+        marginTop: "40px",
+        padding: "20px",
+        textAlign: "center",
+        backgroundColor: "#1B2631",
+        color: "white",
+        borderRadius: "10px",
+    }}
+>
+    <p style={{ margin: "0", fontSize: "14px" }}>
+        Made with ❤️ by an RCB Fan
+    </p>
+
+    <a
+        target="_blank" 
+        rel="noopener noreferrer"
+        href="/support"
+        style={{
+            color: "#5DADE2",
+            textDecoration: "underline",
+            display: "block",
+            marginTop: "8px",
+        }}
+    >
+        Help us keep this project running.
+    </a>
+
+    <a
+        href="mailto:your-email@gmail.com"
+        style={{
+            color: "#F7DC6F",
+            display: "block",
+            marginTop: "5px",
+        }}
+    >
+        Send me a message or feedback
+    </a>
+</div>
       </div>
+
     )}
   </>
 );

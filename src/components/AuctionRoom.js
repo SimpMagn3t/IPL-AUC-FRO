@@ -143,7 +143,7 @@ const AuctionRoom = () => {
                         setWarning('Failed to update your team. Please refresh manually.');
                     }
                 } else {
-                    setWarning(`Player sold to . ${soldState.currBidderName}`); // Show a different message for other teams
+                    setWarning(`Player sold to ${soldState.currBidderName}`); // Show a different message for other teams
                 }
                 // Clear the warning after a short delay
                 setTimeout(() => {
@@ -791,24 +791,48 @@ const AuctionRoom = () => {
                         </div>
                     </div>
                 </div>
+                <div
+    style={{
+        marginTop: "40px",
+        padding: "20px",
+        textAlign: "center",
+        backgroundColor: "#1B2631",
+        color: "white",
+        borderRadius: "10px",
+    }}
+>
+    <p style={{ margin: "0", fontSize: "14px" }}>
+        Made with ❤️ by an RCB Fan
+    </p>
+
+    <a
+        target="_blank" 
+        rel="noopener noreferrer"
+        href="/support"
+        style={{
+            color: "#5DADE2",
+            textDecoration: "underline",
+            display: "block",
+            marginTop: "8px",
+        }}
+    >
+        Help us keep this project running.
+    </a>
+
+    <a
+        href="mailto:kumaranupam8007@gmail.com"
+        style={{
+            color: "#F7DC6F",
+            display: "block",
+            marginTop: "5px",
+        }}
+    >
+        Send me a message or feedback
+    </a>
+</div>
             </div>
             {/* Right Column: Chat Feature */}
             <div className="chat">
-                <button
-                    onClick={handleLogout}
-                    style={{
-                        marginBottom: '20px',
-                        backgroundColor: '#FF6B6B', // Soft red for the logout button
-                        color: 'white',
-                        padding: '10px 15px',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                    }}
-                >
-                    Log Out
-                </button>
                 <div
                     style={{
                         flex: '1',
@@ -918,37 +942,23 @@ const AuctionRoom = () => {
                         </button>
                     </div>
                 </div>
-                <div
+                <button
+                    onClick={handleLogout}
                     style={{
-                        marginTop: '20px',
-                        textAlign: 'center',
-                        backgroundColor: '#FDFEFE',
-                        border: '1px solid #D5DBDB',
-                        borderRadius: '10px',
-                        padding: '15px',
+                        marginBottom: '0px',
+                        backgroundColor: '#FF6B6B', // Soft red for the logout button
+                        color: 'white',
+                        padding: '10px 15px',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
                     }}
                 >
-                    <p style={{ margin: 0, color: '#5D6D7E', fontWeight: 'bold' }}>
-                        Report an issue? Or have any suggestions?
-                    </p>
-                    <button
-                        style={{
-                            marginTop: '10px',
-                            backgroundColor: '#58D68D', // Green for report button
-                            color: 'white',
-                            padding: '10px 20px',
-                            border: 'none',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                        }}
-                    >
-                        Click Here
-                    </button>
-                </div>
+                    Log Out
+                </button>
+                {/* <p>For the best experience use a desktop or laptop browser at 75% zoom.</p> */}
             </div>
-
-
         </div>
     );
 
