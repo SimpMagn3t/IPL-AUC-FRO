@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Card, CardContent, Typography, Grid, Button } from "@mui/material";
-import qr from "../assets/qr.jpg";
 
 export default function Support() {
   return (
